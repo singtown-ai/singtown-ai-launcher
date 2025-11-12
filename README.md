@@ -20,7 +20,7 @@ output file: build/launcher.dist
 - download https://github.com/microsoft/WSL/releases, save to build/wsl.msi
 
 ```powershell
-& 'c:\Program Files (x86)\Inno Setup 6\ISCC.exe' '.\windows\singtown-ai.iss' /dMyAppVersion=0.0.0
+& "c:\Program Files (x86)\Inno Setup 6\ISCC.exe" ".\windows\singtown-ai.iss" "/dMyAppVersion=0.0.0"
 ```
 
-output file: bulid/singtown-ai-installer-v0.0.0.exe
+output file: bulid/singtown-ai-installer-0.0.0.exe
