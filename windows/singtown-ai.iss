@@ -1,5 +1,9 @@
+#ifdef MyAppVersion
+#else
+  #define MyAppVersion "0.0.0"
+#endif
+
 #define MyAppName "SingTown AI"
-#define MyAppVersion "0.1.0"
 #define MyAppPublisher "SingTown LLC"
 #define MyAppURL "https://ai.singtown.com/"
 #define WslName "SingTownAI"
@@ -12,8 +16,6 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{528A38D3-34B6-46C5-BDE9-20C5F445867D}
 AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -32,7 +34,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 OutputDir=../build
-OutputBaseFilename=singtown-ai-installer-v{#MyAppVersion}
+OutputBaseFilename=singtown-ai-installer-{#MyAppVersion}
 SolidCompression=yes
 WizardStyle=modern
 DisableWelcomePage=yes
