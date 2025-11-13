@@ -1,0 +1,142 @@
+name: build installer
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get Version
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION"
+
+  build-launcher:
+    runs-on: windows-latest
+    needs: prepare
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Build executable
+        run: |
+          uv run -m nuitka singtown-ai-launcher/launcher.py `
+          --assume-yes-for-downloads `
+          --output-dir=build `
+          --mode=standalone `
+          --enable-plugin=tk-inter `
+          --windows-console-mode=attach `
+          --windows-icon-from-ico="assets/fav.ico" `
+          --include-data-dir="assets=assets" `
+          --include-data-files="pyproject.toml=pyproject.toml"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher
+          path: build/launcher.dist
+          include-hidden-files: true
+
+  build-machine:
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build machine image
+        run: |
+          mkdir -p build
+          cd docker
+          docker build -t singtown-ai-machine .
+          docker create --name singtown-ai-machine singtown-ai-machine
+          docker export -o ../build/singtown-ai-machine.tar singtown-ai-machine
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: machine
+          path: build/singtown-ai-machine.tar
+          include-hidden-files: true
+
+  build-installer:
+    runs-on: windows-latest
+    needs: [prepare, build-launcher, build-machine]
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: print version
+        run: echo "Building with version ${{ needs.prepare.outputs.version }}"
+
+      - name: Download machine artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: machine
+          path: build
+
+      - name: Download launcher artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: launcher
+          path: build/launcher.dist
+
+      - name: Download wsl installer
+        run: Invoke-WebRequest -Uri "https://github.com/microsoft/WSL/releases/download/2.6.1/wsl.2.6.1.0.x64.msi" -OutFile "build/wsl.msi"
+
+      - name: Inno Setup
+        run: |
+          winget source update
+          winget install --id JRSoftware.InnoSetup -e -s winget -i --override "/silent" --force
+
+      - name: Build installer
+        run: '& "c:\Program Files (x86)\Inno Setup 6\ISCC.exe" ".\windows\singtown-ai.iss" "/dMyAppVersion=${{ needs.prepare.outputs.version }}"'
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: build/singtown-ai-installer-${{ needs.prepare.outputs.version }}.exe
+          include-hidden-files: true
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [prepare, build-installer]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: installer
+          path: build
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/singtown-ai-installer-${{ needs.prepare.outputs.version }}.exe
