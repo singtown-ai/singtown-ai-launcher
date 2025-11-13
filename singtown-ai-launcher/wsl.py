@@ -37,6 +37,14 @@ def terminate():
     subprocess.run("wsl --terminate SingTownAI", shell=True, check=True)
 
 
+def enable_cuda():
+    subprocess.run(
+        "wsl -d SingTownAI nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml",
+        shell=True,
+        check=True,
+    )
+
+
 def podman_service_stop():
     global podman_service_process
     if podman_service_process is not None:

@@ -24,8 +24,8 @@ if __name__ == "__main__":
                 ):
                     wsl.compose_down()
                     wsl.terminate()
+                    wsl.enable_cuda()
                     wsl.podman_service_start()
-                    wsl.compose_down()
 
                 if settings.get_auto_update_enabled():
                     with modal.Loading(
