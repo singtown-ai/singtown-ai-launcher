@@ -87,17 +87,8 @@ def on_use_github_source(icon, item):
     settings.set_download_source("github")
 
 
-def on_exit(icon, item):
-    icon.stop()
-
-
-def create_image(width, height, color1, color2):
-    img = Image.open("assets/fav.ico")
-    return img
-
-
 def run():
-    img = create_image(64, 64, "blue", "white")
+    img = Image.open("assets/fav.ico")
 
     menu = Menu(
         MenuItem(_("Open"), on_open, default=True),
@@ -141,10 +132,10 @@ def run():
             checked=lambda item: settings.get_download_source() == "github",
         ),
         Menu.SEPARATOR,
-        MenuItem(_("Exit"), on_exit),
+        MenuItem(_("Exit"), lambda icon, item: icon.stop()),
     )
 
-    icon = Icon("test_icon", img, menu=menu)
+    icon = Icon("SingTown AI", img, menu=menu)
     icon.run()
 
 
